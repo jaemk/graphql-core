@@ -9,6 +9,7 @@ from ..type.definition import (
 )
 from ..type.directives import DEFAULT_DEPRECATION_REASON
 from .ast_from_value import ast_from_value
+from ..language.ast import UndefinedValue
 
 
 # Necessary for static type checking
@@ -99,25 +100,26 @@ def _print_schema_definition(schema):
     return "schema {{\n{}\n}}".format("\n".join(operation_types))
 
 
-def _print_type(type):
-    # type: (GraphQLType) -> str
-    if isinstance(type, GraphQLScalarType):
-        return _print_scalar(type)
+def _print_type(tyep):
+    # tyep: (GraphQLType) -> str
+    t = type(tyep)
+    if isinstance(tyep, GraphQLScalarType):
+        return _print_scalar(tyep)
 
-    elif isinstance(type, GraphQLObjectType):
-        return _print_object(type)
+    elif isinstance(tyep, GraphQLObjectType):
+        return _print_object(tyep)
 
-    elif isinstance(type, GraphQLInterfaceType):
-        return _print_interface(type)
+    elif isinstance(tyep, GraphQLInterfaceType):
+        return _print_interface(tyep)
 
-    elif isinstance(type, GraphQLUnionType):
-        return _print_union(type)
+    elif isinstance(tyep, GraphQLUnionType):
+        return _print_union(tyep)
 
-    elif isinstance(type, GraphQLEnumType):
-        return _print_enum(type)
+    elif isinstance(tyep, GraphQLEnumType):
+        return _print_enum(tyep)
 
-    assert isinstance(type, GraphQLInputObjectType)
-    return _print_input_object(type)
+    assert isinstance(tyep, GraphQLInputObjectType)
+    return _print_input_object(tyep)
 
 
 def _print_scalar(type):
@@ -202,10 +204,11 @@ def _print_args(field_or_directives):
 
 def _print_input_value(name, arg):
     # type: (str, GraphQLArgument) -> str
-    if arg.default_value is not None:
-        default_value = " = " + print_ast(ast_from_value(arg.default_value, arg.type))
-    else:
+    _ast = ast_from_value(arg.default_value, arg.type)
+    if isinstance(_ast, UndefinedValue):
         default_value = ""
+    else:
+        default_value = " = " + print_ast(_ast)
 
     return "{}: {}{}".format(name, arg.type, default_value)
 
